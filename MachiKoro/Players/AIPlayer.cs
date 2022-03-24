@@ -68,6 +68,7 @@ namespace MachiKoro.Players
             foreach (var card in player.Deck)
                 moneyV += GetWeight(player, card.Key) * (float)card.Value;
             value += moneyV;
+            value += (float)player.Money * 0.1f;
             return value;
         }
 
