@@ -30,7 +30,7 @@ namespace MachiKoro.Players
             bool canDouble = CountCards(player, new Station()) > 0 && CountCards(player, new AmusementPark()) > 0;
 
             // Can this card be activated using only one dice ?
-            if (card.Activations.Count(x => x <= maxDiceValue) == 0)
+            if (card.Activations.Count(x => x <= maxDiceValue) == 0 || (maxDiceValue == 12 && card.Activations[0] == 1))
                 return 0.0f;
             return card.Gain(player) * (card.Activations.Count / (float)maxDiceValue) * (canDouble ? (1 + 1 / 36) : 1);
         }
