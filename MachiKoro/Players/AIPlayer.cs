@@ -183,7 +183,7 @@ namespace MachiKoro.Players
 
             var buyPlayerState = (Player)playerState.Clone();
             var buyGameState = (MachiKoro)state.Clone();
-            if (FutureBuy(ref state, ref buyPlayerState))
+            if (FutureBuy(ref buyGameState, ref buyPlayerState))
             {
                 var buySim = MiniMax(buyGameState, buyPlayerState, depth - 1);
 
@@ -194,7 +194,7 @@ namespace MachiKoro.Players
 
             var buyConstrPlayerState = (Player)playerState.Clone();
             var buyConstrGameState = (MachiKoro)state.Clone();
-            if (FutureConstruct(ref state, ref buyConstrPlayerState))
+            if (FutureConstruct(ref buyConstrGameState, ref buyConstrPlayerState))
             {
                 var constrSim = MiniMax(buyConstrGameState, buyConstrPlayerState, depth - 1);
 
