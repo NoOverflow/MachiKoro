@@ -17,7 +17,7 @@ namespace MachiKoro.Players
         /// <summary>
         /// The player's available money
         /// </summary>
-        public abstract int Money { get; set; }
+        public abstract float Money { get; set; }
 
         /// <summary>
         /// Perform the Player turn

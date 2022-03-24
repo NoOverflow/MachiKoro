@@ -1,6 +1,7 @@
 ﻿using MachiKoro.Cards;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace MachiKoro.Players
             { new WheatField(), 1 },
             { new Bakery(), 1 }
         };
-        public override int Money { get; set; } = 3;
+        public override float Money { get; set; } = 3;
 
         /// <summary>
         /// Get the "weight" of a card, (probability of it being activated * gain) * (1 or (1 + 1/36)) 
@@ -54,17 +55,19 @@ namespace MachiKoro.Players
 
             // Arbitrary values used for this part
             if (CountCards(player, new AmusementPark()) > 0)
-                value += 5;
+                value += 50;
             if (CountCards(player, new Mall()) > 0)
-                value += 5;
+                value += 50;
             if (CountCards(player, new Station()) > 0)
-                value += 5;
+                value += 50;
             if (CountCards(player, new RadioTower()) > 0)
-                value += 5;
+                value += 50;
             //
 
+            float moneyV = 0.0f;
             foreach (var card in player.Deck)
-                value += GetWeight(player, card.Key) * (float)card.Value;
+                moneyV += GetWeight(player, card.Key) * (float)card.Value;
+            value += moneyV;
             return value;
         }
 
@@ -106,6 +109,7 @@ namespace MachiKoro.Players
                 return new RadioTower();
             return null;
         }
+
         private void TestComputeNextSteps(MachiKoro state, Player player)
         {
             var skipValue = EvaluateNode(player);
@@ -167,17 +171,29 @@ namespace MachiKoro.Players
         /// <param name="playerState"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        private float MiniMax(MachiKoro state, Player playerState, int depth)
+        private float MiniMax(MachiKoro state, Player playerState, int depth, Guid test)
         {
             float value = float.MinValue;
 
+            // We reached the required depth, or the node is a terminal node (Game would be won)
             if (depth == 0)
                 return EvaluateNode(playerState);
+            else if (CountCards(playerState, new AmusementPark()) > 0
+                && CountCards(playerState, new Mall()) > 0
+                && CountCards(playerState, new Station()) > 0
+                && CountCards(playerState, new RadioTower()) > 0
+            )
+            {
+                return float.MaxValue;
+            }          
 
             var skipPlayerState = (Player)playerState.Clone();
-            var skipGameState = (MachiKoro)state.Clone(); 
-            var sim = MiniMax(skipGameState, skipPlayerState, depth - 1);
-            if (sim > value)
+            var skipGameState = (MachiKoro)state.Clone();
+
+            foreach (var card in skipPlayerState.Deck)
+                skipPlayerState.Money += GetWeight(skipPlayerState, card.Key) * (float)card.Value;
+            var sim = MiniMax(skipGameState, skipPlayerState, depth - 1, test == Guid.Empty ? Guid.NewGuid() : test);
+            if (sim >= value)
                 FirstMiniMaxMove = MoveType.Skip;
             value = Math.Max(value, sim);
 
@@ -185,24 +201,32 @@ namespace MachiKoro.Players
             var buyGameState = (MachiKoro)state.Clone();
             if (FutureBuy(ref buyGameState, ref buyPlayerState))
             {
-                var buySim = MiniMax(buyGameState, buyPlayerState, depth - 1);
+                foreach (var card in buyPlayerState.Deck)
+                    buyPlayerState.Money += GetWeight(buyPlayerState, card.Key) * (float)card.Value;
 
-                if (buySim >= value)
+                var buySim = MiniMax(buyGameState, buyPlayerState, depth - 1, test == Guid.Empty ? Guid.NewGuid() : test);
+
+                if (buySim > value)
                     FirstMiniMaxMove = MoveType.Buy;
                 value = Math.Max(value, buySim);
             }
 
             var buyConstrPlayerState = (Player)playerState.Clone();
             var buyConstrGameState = (MachiKoro)state.Clone();
+            /* if (test == Guid.Empty && GetMostEfficientMonument(buyConstrPlayerState) != null)
+                Debugger.Break(); */
             if (FutureConstruct(ref buyConstrGameState, ref buyConstrPlayerState))
             {
-                var constrSim = MiniMax(buyConstrGameState, buyConstrPlayerState, depth - 1);
+                foreach (var card in buyConstrPlayerState.Deck)
+                    buyConstrPlayerState.Money += GetWeight(buyConstrPlayerState, card.Key) * (float)card.Value;
 
-                if (constrSim >= value)
+                var constrSim = MiniMax(buyConstrGameState, buyConstrPlayerState, depth - 1, test == Guid.Empty ? Guid.NewGuid() : test);
+
+                if (constrSim >= value && test == Guid.Empty)
                     FirstMiniMaxMove = MoveType.Construct;
                 value = Math.Max(value, constrSim);
             }
-            // Console.WriteLine("Move at depth {0} = {1} ({2})", depth, FirstMiniMaxMove, value);
+            // Console.WriteLine("Move at depth {0} = {1} ({2}) ({3})", depth, FirstMiniMaxMove, value, test);
             return value;
         }
 
@@ -214,7 +238,10 @@ namespace MachiKoro.Players
             state.PerformEffects(this, result);
 
             MachiKoro shallowGameState = (MachiKoro)state.Clone();
-            MiniMax(shallowGameState, this, 8);
+            FirstMiniMaxMove = MoveType.Skip;
+            var mResult = MiniMax(shallowGameState, this, 5, Guid.Empty);
+
+            //Console.WriteLine("Minimax result: {0}", mResult);
             switch (FirstMiniMaxMove)
             {
                 case MoveType.Skip:

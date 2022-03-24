@@ -119,12 +119,12 @@ namespace MachiKoro
             this.AIPlayer.Deck.Add(new Mall(), 1);
             this.AIPlayer.Deck.Add(new RadioTower(), 1);
 
-            this.AIPlayer.Money = 14;
+            this.AIPlayer.Money = 15;
 
             this.AvailableCards = CardFactory.GenerateDeck(84);
 
             // Simulate 5 rounds with only AI playing
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 90; i++)
             {
                 Console.WriteLine("[ Available Cards ]");
                 foreach (var card in this.AvailableCards)
@@ -135,9 +135,9 @@ namespace MachiKoro
                 this.AIPlayer.DoTurn(this);
 
                 if (CountCards(AIPlayer, new AmusementPark()) > 0
-                && CountCards(AIPlayer, new Mall()) > 0
-                && CountCards(AIPlayer, new Station()) > 0
-                && CountCards(AIPlayer, new RadioTower()) > 0
+                    && CountCards(AIPlayer, new Mall()) > 0
+                    && CountCards(AIPlayer, new Station()) > 0
+                    && CountCards(AIPlayer, new RadioTower()) > 0
                 )
                 {
                     Console.WriteLine("We won at round {0}!", i);
